@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWI Command Palette (Item/Action/Wiki/Market)
 // @namespace    mwi_command_palette
-// @version      4.3.1
+// @version      4.3.2
 // @description  Command palette for quick item & action lookup (Cmd+K / Ctrl+K) with autocomplete and fuzzy matching.
 // @author       Mists
 // @license      MIT
@@ -1028,6 +1028,11 @@
                 const validTier = Math.max(0, Math.min(tier, maxDifficulty));
                 console.log('[Game Commands] Opening dungeon with tier:', validTier);
                 core.handleGoToFindParty(actionHrid, validTier);
+
+                // Force reload by calling handleViewPartyList
+                if (typeof core.handleViewPartyList === 'function') {
+                    core.handleViewPartyList(actionHrid, validTier);
+                }
                 return true;
             } catch (error) {
                 console.error('[Game Commands] Failed to open dungeon:', error);
@@ -1050,6 +1055,11 @@
 
                         if (typeof core.handleGoToFindParty === 'function') {
                             core.handleGoToFindParty(actionHrid, validTier);
+
+                            // Force reload by calling handleViewPartyList
+                            if (typeof core.handleViewPartyList === 'function') {
+                                core.handleViewPartyList(actionHrid, validTier);
+                            }
                             return true;
                         }
                     }
