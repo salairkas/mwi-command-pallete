@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWI Command Palette (Item/Action/Wiki/Market)
 // @namespace    mwi_command_palette
-// @version      4.3.0
+// @version      4.3.1
 // @description  Command palette for quick item & action lookup (Cmd+K / Ctrl+K) with autocomplete and fuzzy matching.
 // @author       Mists
 // @license      MIT
@@ -196,6 +196,8 @@
             const combatActionHrids = new Set();
             const dungeonActionHrids = new Set();
             const dungeonMaxDifficulty = {};  // Map action HRID to max difficulty tier
+            const tieredMonsterHrids = new Set();
+            const tieredMonsterMaxDifficulty = {};  // Map action HRID to max difficulty tier for tiered solo content
 
             for (const [hrid, action] of Object.entries(actionDetailMap)) {
                 if (action && action.name) {
@@ -207,11 +209,22 @@
                     if (action.type === 'combat' || action.combatZoneInfo || action.category === 'combat') {
                         combatActionHrids.add(hrid);
 
-                        // Check if this is a dungeon
-                        if (action.combatZoneInfo?.isDungeon) {
+                        // Check if this is a dungeon OR has tiers
+                        const hasTiers = action.maxDifficulty > 0;
+                        const isPartyContent = action.maxPartySize && action.maxPartySize > 1;
+                        const isDungeon = action.combatZoneInfo?.isDungeon || isPartyContent;
+
+                        if (isDungeon) {
                             dungeonActionHrids.add(hrid);
                             dungeonMaxDifficulty[hrid] = action.maxDifficulty || 0;
                             console.log('[Game Commands] Detected dungeon:', action.name, 'HRID:', hrid, 'maxDifficulty:', action.maxDifficulty);
+                        }
+
+                        // Track tiered solo content separately
+                        if (hasTiers && !isDungeon) {
+                            tieredMonsterHrids.add(hrid);
+                            tieredMonsterMaxDifficulty[hrid] = action.maxDifficulty || 0;
+                            console.log('[Game Commands] Detected tiered monster:', action.name, 'HRID:', hrid, 'maxDifficulty:', action.maxDifficulty);
                         }
 
                         // Derive monster HRID from action HRID
@@ -236,6 +249,8 @@
                 combatActionHrids,
                 dungeonActionHrids,
                 dungeonMaxDifficulty,
+                tieredMonsterHrids,
+                tieredMonsterMaxDifficulty,
                 actionHridToMonsterHrid,
                 actionDetailMap,
                 itemDetailMap,
@@ -993,8 +1008,18 @@
             return false;
         }
 
+        // Check if this is a tiered monster (solo tiered content)
+        const isTieredMonster = window.GAME_COMMAND_DATA.tieredMonsterHrids?.has(actionHrid);
+
         // Debug logging
-        console.log('[Game Commands] openAction:', { actionHrid, isCombat, isDungeon, tier, maxDifficulty });
+        console.log('[Game Commands] openAction:', {
+            actionHrid,
+            isCombat,
+            isDungeon,
+            isTieredMonster,
+            tier,
+            maxDifficulty
+        });
 
         // If it's a dungeon, use handleGoToFindParty with tier
         if (isDungeon && typeof core.handleGoToFindParty === 'function') {
@@ -1016,8 +1041,21 @@
 
             if (monsterHrid && typeof core.handleGoToMonster === 'function') {
                 try {
+                    // Check if this is a tiered monster
+                    if (isTieredMonster && tier > 0) {
+                        // Tiered solo content - use handleGoToFindParty with tier
+                        const maxTier = window.GAME_COMMAND_DATA.tieredMonsterMaxDifficulty?.[actionHrid] || 0;
+                        const validTier = Math.max(0, Math.min(tier, maxTier));
+                        console.log('[Game Commands] Opening tiered monster with tier:', validTier);
+
+                        if (typeof core.handleGoToFindParty === 'function') {
+                            core.handleGoToFindParty(actionHrid, validTier);
+                            return true;
+                        }
+                    }
+
+                    // Simple monster (no tiers)
                     console.log('[Game Commands] Opening monster:', monsterHrid);
-                    // Try opening as individual monster
                     core.handleGoToMonster(monsterHrid);
                     return true;
                 } catch (monsterError) {
