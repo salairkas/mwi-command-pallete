@@ -2,6 +2,8 @@
 
 A command palette for Milky Way Idle that provides quick access to items, actions, marketplace, and wiki pages.
 
+![Demo](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExOWIyaG92cW5uMWhhc3NucW55ejFxZTZyZ3B6cDk1c3Bwb3hsMGtwMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YelcH4pw2njvm4UBol/giphy.gif)
+
 ## Features
 
 ### Quick Access
