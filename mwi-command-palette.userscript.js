@@ -8,6 +8,8 @@
 // @match        https://www.milkywayidle.com/*
 // @match        https://test.milkywayidle.com/*
 // @match        https://www.milkywayidlecn.com/*
+// @updateURL    https://raw.githubusercontent.com/salairkas/mwi-command-pallete/main/mwi-command-palette.userscript.js
+// @downloadURL  https://raw.githubusercontent.com/salairkas/mwi-command-pallete/main/mwi-command-palette.userscript.js
 // @grant        none
 // @run-at       document-idle
 // @require      https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js
